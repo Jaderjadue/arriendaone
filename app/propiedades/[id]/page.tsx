@@ -131,23 +131,27 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
                     priority
                   />
                 </div>
-                {Array.isArray(photos) && photos.length > 1 && (
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                    {[...photos].slice(1).map((photo, index) => (
-                      <div
-                        key={index}
-                        className="relative aspect-square overflow-hidden rounded-lg"
-                      >
-                        <Image
-                          src={photo}
-                          alt={`Foto ${index + 2} de ${propiedad.tipo_propiedad}`}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {(() => {
+                  const additionalPhotos = Array.isArray(photos) ? photos.slice(1) : []
+                  if (additionalPhotos.length === 0) return null
+                  return (
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                      {additionalPhotos.map((photo, index) => (
+                        <div
+                          key={index}
+                          className="relative aspect-square overflow-hidden rounded-lg"
+                        >
+                          <Image
+                            src={photo}
+                            alt={`Foto ${index + 2} de ${propiedad.tipo_propiedad}`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
               </div>
             ) : (
               <div className="flex aspect-video items-center justify-center rounded-xl bg-muted">

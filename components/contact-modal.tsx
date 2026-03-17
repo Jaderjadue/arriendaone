@@ -33,16 +33,30 @@ export function ContactModal({ propiedadId, ubicacion }: ContactModalProps) {
     setIsSubmitting(true)
     setError(null)
 
+    // Validate propiedadId before inserting
+    if (!propiedadId || typeof propiedadId !== 'string' || propiedadId.trim() === '') {
+      setIsSubmitting(false)
+      setError('Error: ID de propiedad no válido.')
+      return
+    }
+
     const formData = new FormData(e.currentTarget)
-    const nombre = formData.get('nombre') as string
-    const email = formData.get('email') as string
-    const telefono = formData.get('telefono') as string
-    const mensaje = formData.get('mensaje') as string
+    const nombre = (formData.get('nombre') as string)?.trim()
+    const email = (formData.get('email') as string)?.trim()
+    const telefono = (formData.get('telefono') as string)?.trim()
+    const mensaje = (formData.get('mensaje') as string)?.trim()
+
+    // Validate required fields
+    if (!nombre || !email) {
+      setIsSubmitting(false)
+      setError('Por favor completa los campos requeridos.')
+      return
+    }
 
     const supabase = createClient()
 
     const { error: insertError } = await supabase.from('postulaciones').insert({
-      propiedad_id: propiedadId,
+      propiedad_id: propiedadId.trim(),
       nombre,
       email,
       telefono: telefono || null,
