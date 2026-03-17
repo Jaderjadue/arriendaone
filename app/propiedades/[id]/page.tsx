@@ -15,7 +15,7 @@ interface PropiedadDetail {
   banos: number
   tipo_propiedad: string
   descripcion: string | null
-  fotos: string[] | null
+  fotos: string[] | string | null
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -60,7 +60,23 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
     maximumFractionDigits: 0,
   }).format(propiedad.precio)
 
-  const photos = propiedad.fotos || []
+  // Handle photos - parse if string, ensure array, filter valid entries
+  let photos: string[] = []
+  if (propiedad.fotos) {
+    if (typeof propiedad.fotos === 'string') {
+      try {
+        const parsed = JSON.parse(propiedad.fotos)
+        photos = Array.isArray(parsed) ? parsed : []
+      } catch {
+        // If it's a single URL string, wrap it in an array
+        photos = propiedad.fotos.startsWith('http') ? [propiedad.fotos] : []
+      }
+    } else if (Array.isArray(propiedad.fotos)) {
+      photos = propiedad.fotos
+    }
+  }
+  // Filter out any non-string or empty values
+  photos = photos.filter((p): p is string => typeof p === 'string' && p.length > 0)
 
   return (
     <main className="min-h-screen bg-background">
