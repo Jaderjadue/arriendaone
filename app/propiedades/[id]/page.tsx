@@ -6,6 +6,7 @@ import { ArrowLeft, MapPin, Bed, Bath, Home } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ContactModal } from '@/components/contact-modal'
 
 interface PropiedadDetail {
   id: string
@@ -61,22 +62,32 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
   }).format(propiedad.precio)
 
   // Handle photos - parse if string, ensure array, filter valid entries
-  let photos: string[] = []
-  if (propiedad.fotos) {
-    if (typeof propiedad.fotos === 'string') {
+  const parsePhotos = (fotos: unknown): string[] => {
+    if (!fotos) return []
+    
+    // If it's already an array, use it
+    if (Array.isArray(fotos)) {
+      return fotos.filter((p): p is string => typeof p === 'string' && p.length > 0)
+    }
+    
+    // If it's a string, try to parse as JSON or treat as single URL
+    if (typeof fotos === 'string') {
       try {
-        const parsed = JSON.parse(propiedad.fotos)
-        photos = Array.isArray(parsed) ? parsed : []
+        const parsed = JSON.parse(fotos)
+        if (Array.isArray(parsed)) {
+          return parsed.filter((p): p is string => typeof p === 'string' && p.length > 0)
+        }
+        return []
       } catch {
         // If it's a single URL string, wrap it in an array
-        photos = propiedad.fotos.startsWith('http') ? [propiedad.fotos] : []
+        return fotos.startsWith('http') ? [fotos] : []
       }
-    } else if (Array.isArray(propiedad.fotos)) {
-      photos = propiedad.fotos
     }
+    
+    return []
   }
-  // Filter out any non-string or empty values
-  photos = photos.filter((p): p is string => typeof p === 'string' && p.length > 0)
+  
+  const photos: string[] = parsePhotos(propiedad.fotos)
 
   return (
     <main className="min-h-screen bg-background">
@@ -195,9 +206,7 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
                 </div>
 
                 {/* Contact CTA */}
-                <Button size="lg" className="w-full">
-                  Contactar
-                </Button>
+                <ContactModal propiedadId={propiedad.id} ubicacion={propiedad.ubicacion} />
                 <p className="text-center text-sm text-muted-foreground">
                   Sin comisión de corretaje
                 </p>
