@@ -21,43 +21,66 @@ interface PropiedadDetail {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
   
-  const { data: propiedad } = await supabase
-    .from('propiedades')
-    .select('ubicacion, tipo_propiedad')
-    .eq('id', id)
-    .single()
+  try {
+    const supabase = await createClient()
+    const { data: propiedad } = await supabase
+      .from('propiedades')
+      .select('ubicacion, tipo_propiedad')
+      .eq('id', id)
+      .single()
 
-  if (!propiedad) {
-    return {
-      title: 'Propiedad no encontrada | ArriendaOne',
+    if (!propiedad) {
+      return { title: 'Propiedad no encontrada | ArriendaOne' }
     }
-  }
 
-  return {
-    title: `${propiedad.tipo_propiedad} en ${propiedad.ubicacion} | ArriendaOne`,
-    description: `Arrienda este ${propiedad.tipo_propiedad.toLowerCase()} en ${propiedad.ubicacion} sin pagar comisión de corretaje.`,
+    return {
+      title: `${propiedad.tipo_propiedad} en ${propiedad.ubicacion} | ArriendaOne`,
+      description: `Arrienda este ${propiedad.tipo_propiedad.toLowerCase()} en ${propiedad.ubicacion} sin pagar comisión de corretaje.`,
+    }
+  } catch {
+    return { title: 'Propiedad | ArriendaOne' }
   }
 }
 
-function parsePhotos(fotos: unknown): string[] {
+// Safely parse photos from any format - ALWAYS returns string[]
+function safeParsePhotos(fotos: unknown): string[] {
+  // Return empty array for any falsy value
   if (!fotos) return []
   
   try {
-    let photoArray: unknown[] = []
-    
+    // If already an array, filter to valid strings
     if (Array.isArray(fotos)) {
-      photoArray = fotos
-    } else if (typeof fotos === 'string') {
+      const result: string[] = []
+      for (const item of fotos) {
+        if (typeof item === 'string' && item.length > 0) {
+          result.push(item)
+        }
+      }
+      return result
+    }
+    
+    // If string, try JSON parse or treat as single URL
+    if (typeof fotos === 'string') {
+      // Try parsing as JSON
       try {
         const parsed = JSON.parse(fotos)
         if (Array.isArray(parsed)) {
-          photoArray = parsed
-        } else if (typeof parsed === 'string' && parsed.startsWith('http')) {
+          const result: string[] = []
+          for (const item of parsed) {
+            if (typeof item === 'string' && item.length > 0) {
+              result.push(item)
+            }
+          }
+          return result
+        }
+        // Parsed to non-array (maybe object or string)
+        if (typeof parsed === 'string' && parsed.startsWith('http')) {
           return [parsed]
         }
+        return []
       } catch {
+        // Not valid JSON - check if it's a URL
         if (fotos.startsWith('http')) {
           return [fotos]
         }
@@ -65,30 +88,37 @@ function parsePhotos(fotos: unknown): string[] {
       }
     }
     
-    const result: string[] = []
-    for (let i = 0; i < photoArray.length; i++) {
-      const item = photoArray[i]
-      if (typeof item === 'string' && item.length > 0) {
-        result.push(item)
-      }
-    }
-    return result
+    // Any other type returns empty array
+    return []
   } catch {
+    // Any error returns empty array
     return []
   }
 }
 
 export default async function PropiedadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
   
-  const { data: propiedad, error } = await supabase
-    .from('propiedades')
-    .select('id, ubicacion, precio, dormitorios, banos, tipo_propiedad, descripcion, fotos')
-    .eq('id', id)
-    .single()
+  let propiedad: PropiedadDetail | null = null
+  
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('propiedades')
+      .select('id, ubicacion, precio, dormitorios, banos, tipo_propiedad, descripcion, fotos')
+      .eq('id', id)
+      .single()
 
-  if (error || !propiedad) {
+    if (error || !data) {
+      notFound()
+    }
+    
+    propiedad = data
+  } catch {
+    notFound()
+  }
+
+  if (!propiedad) {
     notFound()
   }
 
@@ -98,9 +128,12 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
     maximumFractionDigits: 0,
   }).format(propiedad.precio)
 
-  const photos: string[] = parsePhotos(propiedad.fotos)
-  const mainPhoto = photos.length > 0 ? photos[0] : null
-  const additionalPhotos: string[] = photos.length > 1 ? photos.slice(1) : []
+  // Get photos as a guaranteed string array
+  const allPhotos = safeParsePhotos(propiedad.fotos)
+  
+  // Extract main photo and additional photos safely
+  const mainPhoto = allPhotos.length > 0 ? allPhotos[0] : null
+  const otherPhotos = allPhotos.length > 1 ? allPhotos.slice(1) : []
 
   return (
     <main className="min-h-screen bg-background">
@@ -119,7 +152,7 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
           {/* Main content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Photo gallery */}
-            {mainPhoto ? (
+            {mainPhoto !== null ? (
               <div className="space-y-4">
                 <div className="relative aspect-video overflow-hidden rounded-xl">
                   <Image
@@ -130,23 +163,23 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
                     priority
                   />
                 </div>
-                {additionalPhotos.length > 0 && (
+                {otherPhotos.length > 0 ? (
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                    {additionalPhotos.map((photo, index) => (
+                    {otherPhotos.map((photoUrl, idx) => (
                       <div
-                        key={index}
+                        key={idx}
                         className="relative aspect-square overflow-hidden rounded-lg"
                       >
                         <Image
-                          src={photo}
-                          alt={`Foto ${index + 2} de ${propiedad.tipo_propiedad}`}
+                          src={photoUrl}
+                          alt={`Foto ${idx + 2} de ${propiedad.tipo_propiedad}`}
                           fill
                           className="object-cover"
                         />
                       </div>
                     ))}
                   </div>
-                )}
+                ) : null}
               </div>
             ) : (
               <div className="flex aspect-video items-center justify-center rounded-xl bg-muted">
