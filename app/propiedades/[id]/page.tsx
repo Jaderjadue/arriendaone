@@ -62,32 +62,46 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
   }).format(propiedad.precio)
 
   // Handle photos - parse if string, ensure array, filter valid entries
-  const parsePhotos = (fotos: unknown): string[] => {
-    if (!fotos) return []
-    
-    // If it's already an array, use it
-    if (Array.isArray(fotos)) {
-      return fotos.filter((p): p is string => typeof p === 'string' && p.length > 0)
-    }
-    
-    // If it's a string, try to parse as JSON or treat as single URL
-    if (typeof fotos === 'string') {
-      try {
-        const parsed = JSON.parse(fotos)
-        if (Array.isArray(parsed)) {
-          return parsed.filter((p): p is string => typeof p === 'string' && p.length > 0)
+  function getPhotosArray(fotos: unknown): string[] {
+    try {
+      if (!fotos) return []
+      
+      let photoArray: unknown[] = []
+      
+      // If it's already an array, use it
+      if (Array.isArray(fotos)) {
+        photoArray = fotos
+      } else if (typeof fotos === 'string') {
+        // Try to parse as JSON
+        try {
+          const parsed = JSON.parse(fotos)
+          if (Array.isArray(parsed)) {
+            photoArray = parsed
+          } else if (typeof parsed === 'string' && parsed.startsWith('http')) {
+            photoArray = [parsed]
+          }
+        } catch {
+          // If it's a single URL string, wrap it in an array
+          if (fotos.startsWith('http')) {
+            photoArray = [fotos]
+          }
         }
-        return []
-      } catch {
-        // If it's a single URL string, wrap it in an array
-        return fotos.startsWith('http') ? [fotos] : []
       }
+      
+      // Filter to only valid string URLs and return a new array
+      const result: string[] = []
+      for (const item of photoArray) {
+        if (typeof item === 'string' && item.length > 0) {
+          result.push(item)
+        }
+      }
+      return result
+    } catch {
+      return []
     }
-    
-    return []
   }
   
-  const photos: string[] = parsePhotos(propiedad.fotos)
+  const photos = getPhotosArray(propiedad.fotos)
 
   return (
     <main className="min-h-screen bg-background">
@@ -106,7 +120,7 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
           {/* Main content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Photo gallery */}
-            {photos.length > 0 ? (
+            {Array.isArray(photos) && photos.length > 0 ? (
               <div className="space-y-4">
                 <div className="relative aspect-video overflow-hidden rounded-xl">
                   <Image
@@ -117,9 +131,9 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
                     priority
                   />
                 </div>
-                {photos.length > 1 && (
+                {Array.isArray(photos) && photos.length > 1 && (
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                    {photos.slice(1).map((photo, index) => (
+                    {[...photos].slice(1).map((photo, index) => (
                       <div
                         key={index}
                         className="relative aspect-square overflow-hidden rounded-lg"
