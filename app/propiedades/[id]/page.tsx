@@ -16,7 +16,7 @@ interface PropiedadDetail {
   banos: number
   tipo_propiedad: string
   descripcion: string | null
-  fotos: string[] | string | null
+  fotos: unknown
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -41,6 +41,43 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
+function parsePhotos(fotos: unknown): string[] {
+  if (!fotos) return []
+  
+  try {
+    let photoArray: unknown[] = []
+    
+    if (Array.isArray(fotos)) {
+      photoArray = fotos
+    } else if (typeof fotos === 'string') {
+      try {
+        const parsed = JSON.parse(fotos)
+        if (Array.isArray(parsed)) {
+          photoArray = parsed
+        } else if (typeof parsed === 'string' && parsed.startsWith('http')) {
+          return [parsed]
+        }
+      } catch {
+        if (fotos.startsWith('http')) {
+          return [fotos]
+        }
+        return []
+      }
+    }
+    
+    const result: string[] = []
+    for (let i = 0; i < photoArray.length; i++) {
+      const item = photoArray[i]
+      if (typeof item === 'string' && item.length > 0) {
+        result.push(item)
+      }
+    }
+    return result
+  } catch {
+    return []
+  }
+}
+
 export default async function PropiedadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
@@ -61,47 +98,9 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
     maximumFractionDigits: 0,
   }).format(propiedad.precio)
 
-  // Handle photos - parse if string, ensure array, filter valid entries
-  function getPhotosArray(fotos: unknown): string[] {
-    try {
-      if (!fotos) return []
-      
-      let photoArray: unknown[] = []
-      
-      // If it's already an array, use it
-      if (Array.isArray(fotos)) {
-        photoArray = fotos
-      } else if (typeof fotos === 'string') {
-        // Try to parse as JSON
-        try {
-          const parsed = JSON.parse(fotos)
-          if (Array.isArray(parsed)) {
-            photoArray = parsed
-          } else if (typeof parsed === 'string' && parsed.startsWith('http')) {
-            photoArray = [parsed]
-          }
-        } catch {
-          // If it's a single URL string, wrap it in an array
-          if (fotos.startsWith('http')) {
-            photoArray = [fotos]
-          }
-        }
-      }
-      
-      // Filter to only valid string URLs and return a new array
-      const result: string[] = []
-      for (const item of photoArray) {
-        if (typeof item === 'string' && item.length > 0) {
-          result.push(item)
-        }
-      }
-      return result
-    } catch {
-      return []
-    }
-  }
-  
-  const photos = getPhotosArray(propiedad.fotos)
+  const photos: string[] = parsePhotos(propiedad.fotos)
+  const mainPhoto = photos.length > 0 ? photos[0] : null
+  const additionalPhotos: string[] = photos.length > 1 ? photos.slice(1) : []
 
   return (
     <main className="min-h-screen bg-background">
@@ -120,38 +119,34 @@ export default async function PropiedadDetailPage({ params }: { params: Promise<
           {/* Main content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Photo gallery */}
-            {Array.isArray(photos) && photos.length > 0 ? (
+            {mainPhoto ? (
               <div className="space-y-4">
                 <div className="relative aspect-video overflow-hidden rounded-xl">
                   <Image
-                    src={photos[0]}
+                    src={mainPhoto}
                     alt={`${propiedad.tipo_propiedad} en ${propiedad.ubicacion}`}
                     fill
                     className="object-cover"
                     priority
                   />
                 </div>
-                {(() => {
-                  const additionalPhotos = Array.isArray(photos) ? photos.slice(1) : []
-                  if (additionalPhotos.length === 0) return null
-                  return (
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                      {additionalPhotos.map((photo, index) => (
-                        <div
-                          key={index}
-                          className="relative aspect-square overflow-hidden rounded-lg"
-                        >
-                          <Image
-                            src={photo}
-                            alt={`Foto ${index + 2} de ${propiedad.tipo_propiedad}`}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )
-                })()}
+                {additionalPhotos.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                    {additionalPhotos.map((photo, index) => (
+                      <div
+                        key={index}
+                        className="relative aspect-square overflow-hidden rounded-lg"
+                      >
+                        <Image
+                          src={photo}
+                          alt={`Foto ${index + 2} de ${propiedad.tipo_propiedad}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex aspect-video items-center justify-center rounded-xl bg-muted">

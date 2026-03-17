@@ -16,15 +16,23 @@ interface Propiedad {
 }
 
 export default async function PropiedadesPage() {
-  const supabase = await createClient()
+  let propiedades: Propiedad[] = []
   
-  const { data: propiedades, error } = await supabase
-    .from('propiedades')
-    .select('id, ubicacion, precio, dormitorios, banos, tipo_propiedad')
-    .order('created_at', { ascending: false })
+  try {
+    const supabase = await createClient()
+    
+    const { data, error } = await supabase
+      .from('propiedades')
+      .select('id, ubicacion, precio, dormitorios, banos, tipo_propiedad')
+      .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching propiedades:', error)
+    if (error) {
+      console.error('Error fetching propiedades:', error)
+    } else {
+      propiedades = data || []
+    }
+  } catch (err) {
+    console.error('Error connecting to Supabase:', err)
   }
 
   return (
@@ -39,7 +47,7 @@ export default async function PropiedadesPage() {
           </p>
         </header>
 
-        {propiedades && propiedades.length > 0 ? (
+        {propiedades.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {propiedades.map((propiedad: Propiedad) => (
               <PropertyCard
