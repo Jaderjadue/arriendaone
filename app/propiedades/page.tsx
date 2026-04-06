@@ -13,7 +13,7 @@ interface Propiedad {
   dormitorios: number
   banos: number
   tipo_propiedad: string
-  imagen?: string
+
 }
 
 export default async function PropiedadesPage() {
@@ -24,7 +24,7 @@ export default async function PropiedadesPage() {
 
     const { data, error } = await supabase
       .from('propiedades')
-      .select('id, ubicacion, precio, dormitorios, banos, tipo_propiedad, imagen')
+      .select('id, ubicacion, precio, dormitorios, banos, tipo_propiedad')
       .order('created_at', { ascending: false })
 
     if (error) {
