@@ -13,14 +13,15 @@ interface Propiedad {
   dormitorios: number
   banos: number
   tipo_propiedad: string
+  imagen?: string
 }
 
 export default async function PropiedadesPage() {
   let propiedades: Propiedad[] = []
-  
+
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from('propiedades')
       .select('id, ubicacion, precio, dormitorios, banos, tipo_propiedad')
@@ -58,6 +59,7 @@ export default async function PropiedadesPage() {
                 dormitorios={propiedad.dormitorios}
                 banos={propiedad.banos}
                 tipo_propiedad={propiedad.tipo_propiedad}
+                imagen={propiedad.imagen}
               />
             ))}
           </div>
