@@ -31,11 +31,7 @@ export default async function PropiedadesPage() {
     if (error) {
       console.error('Error fetching propiedades:', error)
     } else {
-      propiedades =
-        data?.map((p) => ({
-          ...p,
-          fotos: p.fotos ? JSON.parse(p.fotos)[0] : null,
-        })) || []
+      propiedades = data || []
     }
   } catch (err) {
     console.error('Error connecting to Supabase:', err)
@@ -65,10 +61,10 @@ export default async function PropiedadesPage() {
                 banos={propiedad.banos}
                 tipo_propiedad={propiedad.tipo_propiedad}
                 imagen={propiedad.fotos}
+
               />
             ))}
           </div>
-
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="rounded-full bg-muted p-6">
@@ -95,6 +91,6 @@ export default async function PropiedadesPage() {
           </div>
         )}
       </div>
-    </main >
+    </main>
   )
 }

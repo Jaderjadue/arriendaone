@@ -38,7 +38,7 @@ export function PropertyCard({
     <Card className="group overflow-hidden transition-shadow hover:shadow-lg">
       <div className="relative h-48 w-full overflow-hidden">
         <img
-          src={typeof imagen === "string" && imagen.trim() !== "" ? imagen : "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop"}
+          src={typeof imagen === "string" && imagen.trim() !== "" ? imagen : "/placeholder.svg"}
           alt={ubicacion}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
@@ -48,7 +48,9 @@ export function PropertyCard({
           </Badge>
         </div>
       </div>
-
+      <p className="text-xs break-all p-2 text-red-500">
+        {imagen}
+      </p>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg leading-tight text-balance">
