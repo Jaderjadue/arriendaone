@@ -48,9 +48,7 @@ export function PropertyCard({
           </Badge>
         </div>
       </div>
-      <p className="text-xs break-all p-2 text-red-500">
-        {imagen}
-      </p>
+
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg leading-tight text-balance">
