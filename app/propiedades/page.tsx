@@ -13,23 +13,29 @@ interface Propiedad {
   dormitorios: number
   banos: number
   tipo_propiedad: string
+  fotos?: string
+
 }
 
 export default async function PropiedadesPage() {
   let propiedades: Propiedad[] = []
-  
+
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from('propiedades')
-      .select('id, ubicacion, precio, dormitorios, banos, tipo_propiedad')
+      .select('id, ubicacion, precio, dormitorios, banos, tipo_propiedad, fotos')
       .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching propiedades:', error)
     } else {
-      propiedades = data || []
+      propiedades =
+        data?.map((p) => ({
+          ...p,
+          fotos: p.fotos ? JSON.parse(p.fotos)[0] : null,
+        })) || []
     }
   } catch (err) {
     console.error('Error connecting to Supabase:', err)
@@ -43,7 +49,7 @@ export default async function PropiedadesPage() {
             Propiedades en Arriendo
           </h1>
           <p className="mt-3 text-lg text-muted-foreground">
-            Encuentra tu próximo hogar sin pagar comisión de corretaje
+            Encuentra tu próximo hogar simple, rápido y seguro
           </p>
         </header>
 
@@ -58,6 +64,9 @@ export default async function PropiedadesPage() {
                 dormitorios={propiedad.dormitorios}
                 banos={propiedad.banos}
                 tipo_propiedad={propiedad.tipo_propiedad}
+                imagen={propiedad.fotos}
+
+
               />
             ))}
           </div>

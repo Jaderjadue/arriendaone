@@ -17,6 +17,7 @@ interface PropertyCardProps {
   dormitorios: number
   banos: number
   tipo_propiedad: string
+  imagen?: string
 }
 
 export function PropertyCard({
@@ -26,15 +27,28 @@ export function PropertyCard({
   dormitorios,
   banos,
   tipo_propiedad,
+  imagen,
 }: PropertyCardProps) {
   const formattedPrice = new Intl.NumberFormat('es-CL', {
     style: 'currency',
     currency: 'CLP',
     maximumFractionDigits: 0,
   }).format(precio)
-
   return (
     <Card className="group overflow-hidden transition-shadow hover:shadow-lg">
+      <div className="relative h-48 w-full overflow-hidden">
+        <img
+          src={typeof imagen === "string" && imagen.trim() !== "" ? imagen : "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop"}
+          alt={ubicacion}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        <div className="absolute left-3 top-3">
+          <Badge className="bg-orange-500 text-white hover:bg-orange-500">
+            SIN COMISIÓN
+          </Badge>
+        </div>
+      </div>
+
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg leading-tight text-balance">
