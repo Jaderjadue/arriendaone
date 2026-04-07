@@ -49,7 +49,7 @@ export default async function PropiedadesPage() {
             Propiedades en Arriendo
           </h1>
           <p className="mt-3 text-lg text-muted-foreground">
-            Encuentra tu próximo hogar sin pagar comisión de corretaje
+            Encuentra tu próximo hogar simple, rápido y seguro
           </p>
         </header>
 
