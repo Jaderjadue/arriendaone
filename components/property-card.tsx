@@ -38,7 +38,7 @@ export function PropertyCard({
     <Card className="group overflow-hidden transition-shadow hover:shadow-lg">
       <div className="relative h-48 w-full overflow-hidden">
         <img
-          src={imagen || "/placeholder.svg"}
+          src={typeof imagen === "string" && imagen.trim() !== "" ? imagen : "/placeholder.svg"}
           alt={ubicacion}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
