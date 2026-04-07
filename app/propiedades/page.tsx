@@ -31,7 +31,11 @@ export default async function PropiedadesPage() {
     if (error) {
       console.error('Error fetching propiedades:', error)
     } else {
-      propiedades = data || []
+      propiedades =
+        data?.map((p) => ({
+          ...p,
+          fotos: p.fotos ? JSON.parse(p.fotos)[0] : null,
+        })) || []
     }
   } catch (err) {
     console.error('Error connecting to Supabase:', err)
