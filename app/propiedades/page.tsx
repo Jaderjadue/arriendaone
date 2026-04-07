@@ -60,7 +60,8 @@ export default async function PropiedadesPage() {
                 dormitorios={propiedad.dormitorios}
                 banos={propiedad.banos}
                 tipo_propiedad={propiedad.tipo_propiedad}
-                imagen={propiedad.fotos}
+
+
               />
             ))}
           </div>
