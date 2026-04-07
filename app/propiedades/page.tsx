@@ -54,9 +54,20 @@ export default async function PropiedadesPage() {
         </header>
 
         {propiedades.length > 0 ? (
-          <pre className="text-xs whitespace-pre-wrap break-all">
-            {JSON.stringify(propiedades?.[0]?.fotos, null, 2)}
-          </pre>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {propiedades.map((propiedad: Propiedad) => (
+              <PropertyCard
+                key={propiedad.id}
+                id={propiedad.id}
+                ubicacion={propiedad.ubicacion}
+                precio={propiedad.precio}
+                dormitorios={propiedad.dormitorios}
+                banos={propiedad.banos}
+                tipo_propiedad={propiedad.tipo_propiedad}
+                imagen={propiedad.fotos}
+              />
+            ))}
+          </div>
 
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
