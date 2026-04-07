@@ -13,6 +13,7 @@ interface Propiedad {
   dormitorios: number
   banos: number
   tipo_propiedad: string
+  fotos?: string
 
 }
 
