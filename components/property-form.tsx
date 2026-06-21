@@ -54,7 +54,7 @@ export function PropertyForm() {
         dormitorios: parseInt(bedrooms, 10),
         banos: parseInt(bathrooms, 10),
         descripcion: formData.get("description") as string,
-        fotos: photos.map(p => p.name),
+        fotos: JSON.stringify(photos.map(p => p.name)),
       })
 
       if (insertError) {
