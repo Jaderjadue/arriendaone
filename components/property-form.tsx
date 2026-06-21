@@ -36,39 +36,60 @@ export function PropertyForm() {
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setError(null)
-    
-    const formData = new FormData(e.currentTarget)
-    const supabase = createClient()
-    
-    try {
-      const { error: insertError } = await supabase.from("propiedades").insert({
-        nombre: formData.get("name") as string,
-        email: formData.get("email") as string,
-        telefono: formData.get("phone") as string,
-        ubicacion: formData.get("location") as string,
-        tipo_propiedad: propertyType,
-        precio: parseInt(formData.get("rent") as string, 10),
-        dormitorios: parseInt(bedrooms, 10),
-        banos: parseInt(bathrooms, 10),
-        descripcion: formData.get("description") as string,
-        fotos: JSON.stringify(photos.map(p => p.name)),
-      })
+  e.preventDefault()
+  setIsSubmitting(true)
+  setError(null)
 
-      if (insertError) {
-        throw insertError
+  const formData = new FormData(e.currentTarget)
+  const supabase = createClient()
+
+  try {
+    const uploadedPhotoUrls: string[] = []
+
+    for (const photo of photos) {
+      const safeName = photo.name.replace(/[^a-zA-Z0-9._-]/g, "-")
+      const filePath = `${crypto.randomUUID()}-${safeName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from("propiedades")
+        .upload(filePath, photo)
+
+      if (uploadError) {
+        throw uploadError
       }
 
-      setIsSubmitted(true)
-    } catch (err) {
-      setError("Hubo un error al enviar tu propiedad. Por favor intenta nuevamente.")
-      console.error(err)
-    } finally {
-      setIsSubmitting(false)
+      const { data } = supabase.storage
+        .from("propiedades")
+        .getPublicUrl(filePath)
+
+      uploadedPhotoUrls.push(data.publicUrl)
     }
+
+    const { error: insertError } = await supabase.from("propiedades").insert({
+      nombre: formData.get("name") as string,
+      email: formData.get("email") as string,
+      telefono: formData.get("phone") as string,
+      ubicacion: formData.get("location") as string,
+      tipo_propiedad: propertyType,
+      precio: parseInt(formData.get("rent") as string, 10),
+      dormitorios: parseInt(bedrooms, 10),
+      banos: parseInt(bathrooms, 10),
+      descripcion: formData.get("description") as string,
+      fotos: JSON.stringify(uploadedPhotoUrls),
+    })
+
+    if (insertError) {
+      throw insertError
+    }
+
+    setIsSubmitted(true)
+  } catch (err) {
+    console.error("Error publicando propiedad:", err)
+    setError(`Error: ${err instanceof Error ? err.message : "Error desconocido"}`)
+  } finally {
+    setIsSubmitting(false)
   }
+}
 
   if (isSubmitted) {
     return (
